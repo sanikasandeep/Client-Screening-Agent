@@ -1,0 +1,47 @@
+{
+  "generator_version": "2.0.0",
+  "generated_at": "2026-06-24T19:00:23.745983+00:00",
+  "source": {
+    "publisher": "OpenSanctions",
+    "dataset": "gb_fcdo_sanctions",
+    "represents": "UK Sanctions List (UKSL), FCDO, sole UK source since 2026-01-28",
+    "snapshot": "latest",
+    "license_note": "Free for non-commercial use; commercial use needs a license."
+  },
+  "schema_note": "customer shaped like Identomat session person object; candidate shaped like get-screening-person-details. Gate mirrors name+DOB screening at minScreeningScore.",
+  "label_definition": "false positive = matches a UK-listed entity on name+DOB but differs on a hard identifier (verified by construction)",
+  "parameters": {
+    "n": 500,
+    "per_entity": 3,
+    "score_threshold": 85.0,
+    "dob_tolerance_years": 5,
+    "seed": 42,
+    "strategies": [
+      "common_name_collision",
+      "hard_case",
+      "partial_token_match",
+      "transliteration_variant",
+      "type_mismatch",
+      "weak_alias_hit"
+    ]
+  },
+  "stats": {
+    "entities_seen": 376,
+    "constructed": 500,
+    "dropped_below_threshold": 135,
+    "by_type": {
+      "type_mismatch": 172,
+      "common_name_collision": 135,
+      "transliteration_variant": 122,
+      "hard_case": 57,
+      "weak_alias_hit": 13,
+      "partial_token_match": 1
+    },
+    "by_difficulty": {
+      "easy": 336,
+      "hard": 123,
+      "medium": 41
+    }
+  },
+  "caveat": "False positives only. Pair with a true-positive set and a realistic base rate before reporting accuracy."
+}

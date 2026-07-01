@@ -1,0 +1,52 @@
+{
+  "generator_version": "1.0.0",
+  "generated_at": "2026-06-22T18:44:34.840053+00:00",
+  "source": {
+    "publisher": "OpenSanctions",
+    "dataset": "gb_fcdo_sanctions",
+    "represents": "UK Sanctions List (UKSL), FCDO, single official UK source for designations under SAMLA 2018 since 2026-01-28",
+    "snapshot": "latest",
+    "license_note": "OpenSanctions is free for non-commercial use; commercial use requires a data license."
+  },
+  "label_definition": "false positive = name-matches a UK-listed entity but differs on a hard identifier (verified by construction)",
+  "parameters": {
+    "n": 50,
+    "per_entity": 6,
+    "match_threshold": 0.8,
+    "dob_tolerance_years": 5,
+    "seed": 7,
+    "strategies": [
+      "common_name_collision",
+      "hard_case",
+      "partial_token_match",
+      "transliteration_variant",
+      "type_mismatch",
+      "weak_alias_hit"
+    ]
+  },
+  "stats": {
+    "entities_seen": 5,
+    "entities_used": 5,
+    "constructed": 18,
+    "dropped_below_threshold": 1,
+    "by_type": {
+      "common_name_collision": 4,
+      "transliteration_variant": 4,
+      "weak_alias_hit": 2,
+      "partial_token_match": 3,
+      "hard_case": 4,
+      "type_mismatch": 1
+    },
+    "by_difficulty": {
+      "medium": 9,
+      "easy": 5,
+      "hard": 4
+    },
+    "score_histogram": {
+      "1.0": 11,
+      "0.9": 4,
+      "0.8": 3
+    }
+  },
+  "caveat": "False positives only. Pair with a true-positive set and a realistic base rate before reporting accuracy."
+}

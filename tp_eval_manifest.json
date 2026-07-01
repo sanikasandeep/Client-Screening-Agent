@@ -1,0 +1,39 @@
+{
+  "generator_version": "2.0.0",
+  "generated_at": "2026-06-24T19:00:23.886974+00:00",
+  "source": {
+    "publisher": "OpenSanctions",
+    "dataset": "gb_fcdo_sanctions",
+    "represents": "UK Sanctions List (UKSL), FCDO, sole UK source since 2026-01-28",
+    "snapshot": "latest",
+    "license_note": "Free for non-commercial use; commercial use needs a license."
+  },
+  "schema_note": "customer shaped like Identomat session person object; candidate shaped like get-screening-person-details (shared with FP generator).",
+  "label_definition": "true positive = a customer who genuinely is a UK-listed person, captured with realistic divergence that preserves identity",
+  "parameters": {
+    "n": 500,
+    "per_entity": 2,
+    "score_threshold": 85.0,
+    "seed": 42,
+    "strategies": [
+      "exact_match",
+      "name_variant",
+      "partial_identity"
+    ]
+  },
+  "stats": {
+    "entities_seen": 657,
+    "constructed": 500,
+    "dropped_below_threshold": 0,
+    "by_type": {
+      "exact_match": 250,
+      "name_variant": 250
+    },
+    "by_difficulty": {
+      "easy": 275,
+      "hard": 125,
+      "medium": 100
+    }
+  },
+  "caveat": "True positives only. Merge with the false-positive set at a realistic base rate (FPs heavily outnumber TPs) before scoring."
+}

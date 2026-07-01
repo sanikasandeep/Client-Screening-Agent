@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.identomatenv/
+venv/
+.venv/
+
+# Data: regenerable, and the OpenSanctions dump is large / licence-restricted
+gb_fcdo_sanctions.ftm.json
+*.jsonl
+!mock_uk.ftm.json
+
+# Editor / OS
+.vscode/
+.DS_Store
