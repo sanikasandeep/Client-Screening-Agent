@@ -25,6 +25,7 @@ No third-party packages required (uses the standard library only).
 from __future__ import annotations
 
 import json
+import time
 import os
 import re
 import sys
@@ -38,9 +39,11 @@ from typing import Optional
 # --------------------------------------------------------------------------- #
 BASE_URL = os.environ.get("AGENT_BASE_URL", "http://localhost:11434/v1")
 MODEL = os.environ.get("AGENT_MODEL", "gemma4:12b")
-API_KEY = os.environ.get("AGENT_API_KEY", "")   # empty for local Ollama
+API_KEY = os.environ.get("AGENT_API_KEY", "")  
 TIMEOUT = int(os.environ.get("AGENT_TIMEOUT", "120"))
 MAX_RETRIES = 2
+TRANSIENT_RETRIES = 4              # retries for a FAILED REQUEST (503, 429, timeout)
+TRANSIENT_STATUS = {429, 500, 502, 503, 504}   # worth retrying; 401/403/404 are not
 
 VALID_DISPOSITIONS = {"true_positive", "false_positive", "needs_review"}
 
@@ -59,34 +62,56 @@ customer and the listed candidate are the SAME real person.
 You are deciding identity, not guilt. The question is never whether the listed \
 person is dangerous; it is only whether the customer IS that listed person.
 
-Weigh the identity fields on both sides:
-- Strong evidence they are DIFFERENT (a false positive): a large gap in date of \
-birth, a different nationality or place of birth, or a mismatched \
-identity-document number.
-- Strong evidence they are the SAME (a true positive): a matching full date of \
-birth, nationality, place of birth, and especially a matching document number.
-- Names vary legitimately through spelling, transliteration, missing middle \
-names, or aliases. Do not treat a name variant as a different person when the \
-other identifiers corroborate. A shared name alone, with nothing else matching, \
-is not enough to confirm a match.
+HOW TO WEIGH EVIDENCE
+A field is evidence ONLY when the same field is present on BOTH records and you \
+can compare them directly. A field present on one record and absent, empty, or \
+null on the other is NOT evidence. It is missing information. Say so, and move on.
 
-Handle uncertainty honestly. Clearing a genuine watchlist match is the most \
-serious possible error, far worse than failing to clear an obvious false \
-positive. When the available fields do not let you decide with confidence, \
-return needs_review rather than guessing. Missing fields lower your confidence.
+- Different date of birth: strong evidence they are DIFFERENT people. Two \
+different dates of birth are two different dates, not a small discrepancy. Do \
+not minimise a date-of-birth conflict by describing the gap as narrow.
+- Different nationality, place of birth, or identity-document number: strong \
+evidence they are DIFFERENT people.
+- Matching full date of birth, nationality, place of birth, or document number: \
+strong evidence they are the SAME person. A matching document number is close \
+to conclusive.
+- Names vary legitimately through spelling, transliteration, missing middle \
+names, or aliases. Do not treat a name variant as a different person when other \
+identifiers corroborate. Equally, a shared name alone, with nothing else \
+matching, is NOT evidence of a match. A name match is why this alert exists; it \
+cannot also be the reason to confirm it.
+
+YOU MUST NOT
+- Do not treat the customer's document_number or personal_number as evidence \
+unless the candidate's idNumbers list actually contains a number to compare it \
+to. If idNumbers is empty, these fields carry ZERO weight. Never reason about \
+the format, length, or structure of an identifier.
+- Do not infer a person's nationality, ethnicity, or origin from the style or \
+apparent language of their name, or from the format of any identifier. Such \
+inferences are unreliable and inadmissible.
+- Do not invent explanations that reconcile conflicting fields (for example, \
+speculating that someone may have naturalised, changed nationality, or used a \
+different date). Adjudicate the recorded facts as given. If the records conflict, \
+that conflict is the finding.
+- Do not use any information beyond the two records provided.
+
+CONFIDENCE AND ABSTENTION
+Clearing a genuine watchlist match is the most serious possible error, far worse \
+than failing to clear an obvious false positive. Return needs_review only when \
+the comparable fields genuinely do not settle the question, not merely because a \
+match feels possible. If the records conflict on a strong identifier and nothing \
+comparable corroborates a match, that is a false_positive, and you should say so.
 
 Respond with ONLY a JSON object, no text before or after it:
 {
   "disposition": "true_positive" | "false_positive" | "needs_review",
   "confidence": <number between 0 and 1>,
-  "key_evidence": [<short strings naming the fields that drove the decision>],
+  "key_evidence": [<field names you actually COMPARED on both records>],
   "rationale": "<one short paragraph>"
 }"""
 
 
-# --------------------------------------------------------------------------- #
 # Step 1: reduce a case to exactly what the agent may see (no ground truth)
-# --------------------------------------------------------------------------- #
 def build_agent_view(case: dict) -> dict:
     """Strip a generated case to the two records a real alert carries, plus the
     screening score. Deliberately drops label, fp_type/tp_type, discriminator,
@@ -108,9 +133,7 @@ def build_messages(view: dict) -> list[dict]:
             {"role": "user", "content": user}]
 
 
-# --------------------------------------------------------------------------- #
 # Step 2: call the model (OpenAI-compatible chat completions)
-# --------------------------------------------------------------------------- #
 def call_model(messages: list[dict]) -> str:
     payload = {
         "model": MODEL,
@@ -125,14 +148,35 @@ def call_model(messages: list[dict]) -> str:
     req = urllib.request.Request(f"{BASE_URL}/chat/completions",
                                  data=json.dumps(payload).encode("utf-8"),
                                  headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-        data = json.loads(resp.read())
-    return data["choices"][0]["message"]["content"]
+    # TRANSPORT retry: the request itself failed (server overloaded, rate limited,
+    # timed out). Nothing is wrong with the request, so resend it unchanged after
+    # waiting -- doubling the wait each time (exponential backoff), because
+    # hammering an overloaded server makes it worse. Distinct from the CONTENT
+    # retry in adjudicate(), which handles a model reply we couldn't parse.
+    delay = 1.0
+    for attempt in range(TRANSIENT_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                data = json.loads(resp.read())
+            return data["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as e:
+            # Permanent errors (401 bad key, 403 forbidden, 404 wrong model/URL)
+            # will never succeed on retry, so fail fast and say so.
+            if e.code not in TRANSIENT_STATUS or attempt == TRANSIENT_RETRIES:
+                raise
+            print(f"  [transient HTTP {e.code}; retrying in {delay:.0f}s "
+                  f"({attempt + 1}/{TRANSIENT_RETRIES})]", file=sys.stderr)
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt == TRANSIENT_RETRIES:
+                raise
+            print(f"  [connection problem ({e}); retrying in {delay:.0f}s "
+                  f"({attempt + 1}/{TRANSIENT_RETRIES})]", file=sys.stderr)
+        time.sleep(delay)
+        delay *= 2                                  # 1s, 2s, 4s, 8s
+    raise RuntimeError("unreachable")
 
 
-# --------------------------------------------------------------------------- #
 # Step 3: parse + validate the model's reply
-# --------------------------------------------------------------------------- #
 def parse_decision(text: str) -> Optional[dict]:
     """Return a validated decision dict, or None if the reply isn't usable."""
     if not text:
