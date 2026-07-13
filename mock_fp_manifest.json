@@ -1,6 +1,6 @@
 {
   "generator_version": "2.0.0",
-  "generated_at": "2026-07-01T20:22:14.910883+00:00",
+  "generated_at": "2026-07-13T19:02:35.357426+00:00",
   "source": {
     "publisher": "OpenSanctions",
     "dataset": "gb_fcdo_sanctions",
@@ -27,18 +27,18 @@
   },
   "stats": {
     "entities_seen": 5,
-    "constructed": 12,
-    "dropped_below_threshold": 7,
+    "constructed": 15,
+    "dropped_below_threshold": 4,
     "by_type": {
       "common_name_collision": 4,
-      "transliteration_variant": 1,
+      "transliteration_variant": 4,
       "weak_alias_hit": 2,
       "hard_case": 4,
       "type_mismatch": 1
     },
     "by_difficulty": {
-      "medium": 3,
-      "easy": 5,
+      "medium": 4,
+      "easy": 7,
       "hard": 4
     }
   },

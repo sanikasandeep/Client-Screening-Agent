@@ -1,5 +1,5 @@
-{"id":"NK-001","schema":"Person","caption":"Davit Lomiashvili","properties":{"name":["Davit Lomiashvili"],"alias":["David Lomiashvili"],"weakAlias":["Dato"],"birthDate":["1975-04-12"],"nationality":["ge","ru"],"gender":["male"]}}
-{"id":"NK-002","schema":"Person","caption":"Mohammed Al-Hassan","properties":{"name":["Mohammed Al-Hassan"],"alias":["Muhammad Hassan"],"birthDate":["1968"],"nationality":["sy"],"gender":["male"]}}
-{"id":"NK-003","schema":"Person","caption":"Olga Petrova","properties":{"name":["Olga Petrova"],"weakAlias":["Olya"],"birthDate":["1982","1983"],"nationality":["ru"],"gender":["female"]}}
-{"id":"NK-004","schema":"Vessel","caption":"PACIFIC STAR","properties":{"name":["PACIFIC STAR"]}}
-{"id":"NK-005","schema":"Person","caption":"Wei Chen","properties":{"name":["Wei Chen"],"birthDate":["1990-11-02"],"nationality":["cn"]}}
+{"id":"NK-001","schema":"Person","caption":"Giorgi Beridze","properties":{"name":["Giorgi Tutberidze"],"alias":["Giorgio Tutberidze"],"weakAlias":["Gio"],"birthDate":["1975-04-12"],"nationality":["ge","ru"],"citizenship":["ge"],"birthPlace":["Tbilisi"],"gender":["male"],"topics":["sanction"]}}
+{"id":"NK-002","schema":"Person","caption":"Mohammed Al-Hassan","properties":{"name":["Mohammed Al-Hassan"],"alias":["Muhammad Hassan"],"birthDate":["1968"],"nationality":["sy"],"birthPlace":["Damascus"],"gender":["male"],"topics":["sanction","role.pep"]}}
+{"id":"NK-003","schema":"Person","caption":"Evgenia Petrova","properties":{"name":["Evgenia Petrova"],"weakAlias":["Zhenya"],"birthDate":["1982","1983"],"nationality":["ru"],"gender":["female"],"topics":["sanction"]}}
+{"id":"NK-004","schema":"Vessel","caption":"PACIFIC STAR","properties":{"name":["PACIFIC STAR"],"topics":["sanction"]}}
+{"id":"NK-005","schema":"Person","caption":"Wei Chen","properties":{"name":["Wei Chen"],"birthDate":["1990-11-02"],"nationality":["cn"],"birthPlace":["Shanghai"],"topics":["sanction"]}}
