@@ -13,3 +13,4 @@ gb_fcdo_sanctions.ftm.json
 # Editor / OS
 .vscode/
 .DS_Store
+env.sh
